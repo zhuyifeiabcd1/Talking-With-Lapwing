@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Lapwing is an AI virtual streamer (AI VTuber). Hop into a ~3-minute browser voice chat — talk while you listen, interrupt anytime. Fresh every time." />
+  <meta name="theme-color" content="#1a0a1e" />
+  <title>Lapwing — AI Virtual Streamer · Talk Live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0610;
+      --bg-elev: #140a1a;
+      --bg-card: rgba(28, 12, 36, 0.72);
+      --magenta: #ff2bd6;
+      --magenta-hot: #ff4de8;
+      --magenta-dim: #c41a9e;
+      --purple: #9b4dff;
+      --purple-deep: #6b2fd6;
+      --violet: #b388ff;
+      --pink-glow: #ff7ad9;
+      --ink: #f4eef8;
+      --ink-soft: #c9b8d4;
+      --muted: #8a7698;
+      --border: rgba(255, 43, 214, 0.28);
+      --border-soft: rgba(155, 77, 255, 0.22);
+      --shadow: 0 0 40px rgba(255, 43, 214, 0.12), 0 12px 40px rgba(0, 0, 0, 0.45);
+      --glow-mag: 0 0 20px rgba(255, 43, 214, 0.55), 0 0 48px rgba(155, 77, 255, 0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 960px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ——— Animated background stack ——— */
+    .bg-stack {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0b0610 0%, #120818 45%, #0a0612 100%);
+    }
+
+    .bg-wash {
+      position: absolute;
+      width: 70vmax;
+      height: 70vmax;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+      will-change: transform;
+    }
+    .bg-wash-a {
+      top: -20%;
+      left: -15%;
+      background: radial-gradient(circle, rgba(255, 43, 214, 0.55) 0%, transparent 70%);
+      animation: wash-drift-a 22s ease-in-out infinite alternate;
+    }
+    .bg-wash-b {
+      top: 10%;
+      right: -25%;
+      background: radial-gradient(circle, rgba(155, 77, 255, 0.5) 0%, transparent 70%);
+      animation: wash-drift-b 28s ease-in-out infinite alternate;
+    }
+    .bg-wash-c {
+      bottom: -30%;
+      left: 25%;
+      background: radial-gradient(circle, rgba(107, 47, 214, 0.45) 0%, transparent 70%);
+      animation: wash-drift-c 26s ease-in-out infinite alternate;
+    }
+
+    @keyframes wash-drift-a {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(12%, 18%) scale(1.15); }
+    }
+    @keyframes wash-drift-b {
+      0%   { transform: translate(0, 0) scale(1.05); }
+      100% { transform: translate(-15%, 10%) scale(1.2); }
+    }
+    @keyframes wash-drift-c {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(8%, -12%) scale(1.18); }
+    }
+
+    /* Soft rain streaks (CSS only) */
+    .bg-rain {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        180deg,
+        transparent 0,
+        transparent 18px,
+        rgba(255, 180, 240, 0.035) 18px,
+        rgba(255, 180, 240, 0.035) 19px
+      );
+      background-size: 100% 80px;
+      animation: rain-fall 1.8s linear infinite;
+      opacity: 0.55;
+      mask-image: linear-gradient(180deg, transparent 0%, #000 20%, #000 90%, transparent 100%);
+    }
+    @keyframes rain-fall {
+      from { background-position: 0 0; }
+      to   { background-position: 0 80px; }
+    }
+
+    /* Floating neon particles (spans injected lightly; also CSS dots) */
+    .bg-particles {
+      position: absolute;
+      inset: 0;
+    }
+    .bg-particles span {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--pink-glow);
+      box-shadow: 0 0 8px rgba(255, 43, 214, 0.8);
+      opacity: 0.5;
+      animation: particle-float var(--dur, 12s) ease-in-out infinite alternate;
+      animation-delay: var(--delay, 0s);
+    }
+    @keyframes particle-float {
+      0%   { transform: translateY(0) translateX(0); opacity: 0.25; }
+      50%  { opacity: 0.7; }
+      100% { transform: translateY(-40px) translateX(18px); opacity: 0.35; }
+    }
+
+    /* Drifting scanlines */
+    .bg-scan {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.14) 3px,
+        rgba(0, 0, 0, 0.14) 4px
+      );
+      animation: scan-drift 8s linear infinite;
+      opacity: 0.4;
+      mix-blend-mode: multiply;
+    }
+    @keyframes scan-drift {
+      from { background-position: 0 0; }
+      to   { background-position: 0 40px; }
+    }
+
+    /* Holographic shimmer band */
+    .bg-shimmer {
+      position: absolute;
+      inset: -20% -40%;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 43, 214, 0.06) 47%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(155, 77, 255, 0.07) 53%,
+        transparent 60%
+      );
+      animation: shimmer-sweep 9s ease-in-out infinite;
+      opacity: 0.85;
+    }
+    @keyframes shimmer-sweep {
+      0%   { transform: translateX(-25%) skewX(-8deg); }
+      50%  { transform: translateX(15%) skewX(-8deg); }
+      100% { transform: translateX(-25%) skewX(-8deg); }
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+    }
+
+    a { color: var(--pink-glow); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+    a:hover { color: var(--magenta-hot); }
+    a:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; border-radius: 4px; }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* Nav */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px) saturate(1.2);
+      background: rgba(11, 6, 16, 0.78);
+      border-bottom: 1px solid var(--border-soft);
+      box-shadow: 0 1px 0 rgba(255, 43, 214, 0.08);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: "Orbitron", sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.06em;
+      color: var(--ink);
+      text-decoration: none;
+      text-shadow: 0 0 18px rgba(255, 43, 214, 0.45);
+    }
+    .brand:hover { color: var(--magenta-hot); }
+    .logo {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 8px rgba(255, 43, 214, 0.7));
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem 1rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-links a:not(.btn) {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .nav-links a:not(.btn):hover { color: var(--magenta-hot); text-shadow: 0 0 12px rgba(255, 43, 214, 0.5); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      letter-spacing: 0.04em;
+    }
+    .btn:focus-visible { outline: 2px solid var(--magenta-hot); outline-offset: 3px; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--magenta) 0%, var(--purple) 100%);
+      color: #fff;
+      box-shadow: var(--glow-mag);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 28px rgba(255, 43, 214, 0.75), 0 0 56px rgba(155, 77, 255, 0.45);
+      color: #fff;
+    }
+    .btn-lg { font-size: 1.12rem; padding: 1rem 2.1rem; }
+    .btn-ghost {
+      background: rgba(255, 43, 214, 0.06);
+      color: var(--ink);
+      border: 1.5px solid rgba(255, 43, 214, 0.45);
+      font-weight: 700;
+      box-shadow: 0 0 16px rgba(255, 43, 214, 0.12);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 43, 214, 0.15);
+      color: var(--magenta-hot);
+      border-color: var(--magenta);
+      box-shadow: 0 0 24px rgba(255, 43, 214, 0.3);
+    }
+    .btn-sm { font-size: 0.85rem; padding: 0.45rem 1rem; font-weight: 700; }
+
+    /* Hero */
+    .hero {
+      padding: 2.75rem 0 2rem;
+      text-align: center;
+    }
+
+    /* Live stage card */
+    .live-stage {
+      display: grid;
+      gap: 1rem;
+      margin: 0 auto 1.75rem;
+      max-width: 420px;
+      text-align: left;
+    }
+    .live-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      position: relative;
+    }
+    .live-panel::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 43, 214, 0.7), transparent);
+    }
+    .live-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      border-bottom: 1px solid var(--border-soft);
+      background: rgba(0, 0, 0, 0.25);
+    }
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #fff;
+      background: linear-gradient(135deg, #ff2b6b, var(--magenta));
+      padding: 0.28rem 0.65rem;
+      border-radius: 4px;
+      box-shadow: 0 0 16px rgba(255, 43, 214, 0.55);
+      animation: live-pulse 2.4s ease-in-out infinite;
+    }
+    .live-badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 6px #fff;
+      animation: live-dot 2.4s ease-in-out infinite;
+    }
+    @keyframes live-pulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(255, 43, 214, 0.4); filter: brightness(1); }
+      50%      { box-shadow: 0 0 22px rgba(255, 43, 214, 0.75); filter: brightness(1.08); }
+    }
+    @keyframes live-dot {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.35; }
+    }
+    .live-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .live-meta strong { color: var(--pink-glow); font-weight: 700; }
+
+    .live-body {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 0.85rem;
+      padding: 1rem 0.95rem 0.9rem;
+      align-items: center;
+    }
+    @media (max-width: 400px) {
+      .live-body { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    }
+
+    .avatar-wrap {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto;
+    }
+    .avatar-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 43, 214, 0.5);
+      box-shadow: 0 0 18px rgba(255, 43, 214, 0.35);
+      animation: ring-spin 10s linear infinite;
+    }
+    @keyframes ring-spin {
+      to { transform: rotate(360deg); }
+    }
+    .avatar-ring::after {
+      content: "";
+      position: absolute;
+      top: -2px; left: 50%;
+      width: 6px; height: 6px;
+      margin-left: -3px;
+      border-radius: 50%;
+      background: var(--magenta-hot);
+      box-shadow: 0 0 8px var(--magenta);
+    }
+    .feather {
+      width: 88px;
+      height: 88px;
+      position: relative;
+      filter: drop-shadow(0 0 14px rgba(255, 43, 214, 0.85)) drop-shadow(0 0 28px rgba(155, 77, 255, 0.5));
+      animation: float 4s ease-in-out infinite, soft-glitch 7s steps(1, end) infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    /* Rare soft holographic glitch — not seizure-y */
+    @keyframes soft-glitch {
+      0%, 92%, 100% { transform: translate(0, 0); filter: drop-shadow(0 0 14px rgba(255, 43, 214, 0.85)) drop-shadow(0 0 28px rgba(155, 77, 255, 0.5)); }
+      93% { transform: translate(-2px, 1px); filter: drop-shadow(0 0 14px rgba(255, 43, 214, 0.85)) hue-rotate(20deg); }
+      94% { transform: translate(2px, -1px); filter: drop-shadow(-3px 0 0 rgba(255, 43, 214, 0.5)) drop-shadow(3px 0 0 rgba(100, 180, 255, 0.35)); }
+      95% { transform: translate(0, 0); filter: drop-shadow(0 0 14px rgba(255, 43, 214, 0.85)) drop-shadow(0 0 28px rgba(155, 77, 255, 0.5)); }
+    }
+
+    .live-side { min-width: 0; }
+    .eq {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 28px;
+      margin-bottom: 0.55rem;
+    }
+    .eq span {
+      display: block;
+      width: 4px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--magenta-hot), var(--purple));
+      box-shadow: 0 0 6px rgba(255, 43, 214, 0.5);
+      animation: eq-bounce var(--eq-dur, 0.8s) ease-in-out infinite alternate;
+      height: var(--eq-h, 40%);
+      transform-origin: bottom;
+    }
+    @keyframes eq-bounce {
+      from { transform: scaleY(0.35); opacity: 0.65; }
+      to   { transform: scaleY(1); opacity: 1; }
+    }
+    .live-side .hint {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      line-height: 1.4;
+    }
+
+    /* Chat ticker */
+    .chat-ticker {
+      border-top: 1px solid var(--border-soft);
+      background: rgba(0, 0, 0, 0.3);
+      height: 2.1rem;
+      overflow: hidden;
+      position: relative;
+    }
+    .chat-track {
+      display: flex;
+      gap: 2rem;
+      white-space: nowrap;
+      width: max-content;
+      animation: ticker-scroll 28s linear infinite;
+      padding: 0.4rem 0;
+      will-change: transform;
+    }
+    .chat-track span {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+    .chat-track .who {
+      color: var(--pink-glow);
+      font-weight: 700;
+      margin-right: 0.35rem;
+    }
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 43, 214, 0.12);
+      border: 1px solid rgba(255, 43, 214, 0.45);
+      color: var(--pink-glow);
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.4rem 0.95rem;
+      border-radius: 999px;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 0 20px rgba(255, 43, 214, 0.2);
+      text-shadow: 0 0 10px rgba(255, 43, 214, 0.5);
+    }
+
+    .hero h1 {
+      font-family: "Orbitron", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.75rem, 5vw, 2.55rem);
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.75rem;
+      color: #fff;
+      text-shadow:
+        0 0 20px rgba(255, 43, 214, 0.55),
+        0 0 40px rgba(155, 77, 255, 0.3),
+        0 2px 0 rgba(0, 0, 0, 0.4);
+    }
+    .hero .tagline {
+      font-size: clamp(1.02rem, 2.4vw, 1.2rem);
+      color: var(--ink-soft);
+      max-width: 34em;
+      margin: 0 auto 0.5rem;
+      font-weight: 500;
+    }
+    .hero .bilingual {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+    }
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    section { padding: 2.25rem 0; }
+    .section-title {
+      font-family: "Orbitron", sans-serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+      margin-bottom: 0.4rem;
+      color: #fff;
+      text-shadow: 0 0 16px rgba(255, 43, 214, 0.4);
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+      font-size: 0.98rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 1.5rem 1.4rem;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 43, 214, 0.65), transparent);
+      opacity: 0.8;
+    }
+
+    .about-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 640px) {
+      .about-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .about-card h3 {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.98rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.45rem;
+      color: var(--magenta-hot);
+      text-shadow: 0 0 12px rgba(255, 43, 214, 0.45);
+    }
+    .about-card p { color: var(--ink-soft); font-size: 0.98rem; }
+
+    .steps {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 700px) {
+      .steps { grid-template-columns: repeat(3, 1fr); }
+    }
+    .step { text-align: center; padding: 1.5rem 1.15rem; }
+    .step-num {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--magenta), var(--purple));
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.05rem;
+      font-family: "Orbitron", sans-serif;
+      box-shadow: var(--glow-mag);
+    }
+    .step h3 {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.92rem;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.4rem;
+      color: #fff;
+    }
+    .step p { color: var(--ink-soft); font-size: 0.95rem; }
+
+    /* Soft community note (no age emphasis) */
+    .note-card {
+      background: linear-gradient(145deg, rgba(255, 43, 214, 0.08), rgba(107, 47, 214, 0.12));
+      border: 1px solid rgba(255, 43, 214, 0.28);
+    }
+    .note-card h2 { text-align: left; margin-bottom: 0.65rem; }
+    .note-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .note-card li {
+      display: flex;
+      gap: 0.65rem;
+      align-items: flex-start;
+      color: var(--ink-soft);
+      font-size: 0.98rem;
+    }
+    .note-card li::before {
+      content: "◆";
+      color: var(--magenta);
+      font-size: 0.65rem;
+      margin-top: 0.4rem;
+      flex-shrink: 0;
+      text-shadow: 0 0 8px rgba(255, 43, 214, 0.8);
+    }
+    .note-card strong { color: #fff; }
+
+    .social-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.15rem;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 0 20px rgba(255, 43, 214, 0.08);
+      border: 1px solid var(--border-soft);
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.92rem;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+    }
+    .social-link:hover {
+      transform: translateY(-2px);
+      border-color: var(--magenta);
+      color: var(--magenta-hot);
+      box-shadow: 0 0 24px rgba(255, 43, 214, 0.35);
+    }
+    .social-icon { width: 22px; height: 22px; flex-shrink: 0; }
+
+    .cta-band {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      background: linear-gradient(135deg, rgba(255, 43, 214, 0.16), rgba(107, 47, 214, 0.2));
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 43, 214, 0.4);
+      margin: 1rem 0 2rem;
+      box-shadow: 0 0 40px rgba(255, 43, 214, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-band::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.04) 50%, transparent 60%);
+      pointer-events: none;
+      animation: shimmer-sweep 10s ease-in-out infinite;
+    }
+    .cta-band h2 {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.4rem;
+      color: #fff;
+      text-shadow: 0 0 18px rgba(255, 43, 214, 0.5);
+      position: relative;
+    }
+    .cta-band p {
+      color: var(--ink-soft);
+      margin-bottom: 1.25rem;
+      font-size: 0.98rem;
+      position: relative;
+    }
+    .cta-band .btn { position: relative; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border-soft);
+      padding: 1.75rem 0 2.25rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    footer .foot-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      justify-content: center;
+      margin-bottom: 0.85rem;
+    }
+    footer .foot-links a {
+      color: var(--ink-soft);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    footer .foot-links a:hover {
+      color: var(--magenta-hot);
+      text-shadow: 0 0 10px rgba(255, 43, 214, 0.5);
+    }
+    .foot-quiet {
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: #6a5a72;
+      letter-spacing: 0.01em;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bg-wash, .bg-rain, .bg-scan, .bg-shimmer, .bg-particles span,
+      .feather, .avatar-ring, .live-badge, .live-badge::before,
+      .eq span, .chat-track, .cta-band::after { animation: none !important; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-stack" aria-hidden="true">
+    <div class="bg-wash bg-wash-a"></div>
+    <div class="bg-wash bg-wash-b"></div>
+    <div class="bg-wash bg-wash-c"></div>
+    <div class="bg-rain"></div>
+    <div class="bg-particles" id="particles"></div>
+    <div class="bg-shimmer"></div>
+    <div class="bg-scan"></div>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <nav class="nav" aria-label="Primary">
+    <div class="nav-inner">
+      <a class="brand" href="#top">
+        <svg class="logo" viewBox="0 0 40 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff2bd6"/>
+              <stop offset="100%" stop-color="#9b4dff"/>
+            </linearGradient>
+          </defs>
+          <circle cx="20" cy="20" r="18" fill="url(#g1)" opacity="0.25"/>
+          <path d="M10 26 C12 14, 22 8, 32 10 C28 12, 24 16, 22 22 C26 20, 30 18, 33 16 C28 24, 20 30, 10 26 Z"
+                fill="url(#g1)" stroke="#ff7ad9" stroke-width="0.8" stroke-linejoin="round"/>
+          <circle cx="14" cy="18" r="1.4" fill="#fff" opacity="0.9"/>
+        </svg>
+        Lapwing
+      </a>
+      <div class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#community">Community</a>
+        <a href="#socials">Socials</a>
+        <a class="btn btn-primary btn-sm" href="https://lapwing-live.talking-with-lapwing.workers.dev">JOIN</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero wrap">
+      <div class="live-stage" aria-label="Stream mood preview">
+        <div class="live-panel">
+          <div class="live-top">
+            <span class="live-badge">LIVE</span>
+            <span class="live-meta"><strong>AI stream</strong> · mood preview</span>
+          </div>
+          <div class="live-body">
+            <div class="avatar-wrap">
+              <div class="avatar-ring" aria-hidden="true"></div>
+              <svg class="feather" viewBox="0 0 96 96" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="fg" x1="10%" y1="0%" x2="90%" y2="100%">
+                    <stop offset="0%" stop-color="#ff2bd6"/>
+                    <stop offset="50%" stop-color="#c44dff"/>
+                    <stop offset="100%" stop-color="#9b4dff"/>
+                  </linearGradient>
+                  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="2.8" result="b"/>
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <ellipse cx="48" cy="48" rx="36" ry="36" fill="url(#fg)" opacity="0.18"/>
+                <path filter="url(#glow)"
+                      d="M28 68 C30 42, 48 22, 74 20 C66 28, 58 40, 54 54 C62 48, 72 42, 78 36 C68 56, 50 72, 28 68 Z"
+                      fill="url(#fg)" stroke="#ff7ad9" stroke-width="1.2" stroke-linejoin="round"/>
+                <path d="M40 58 L58 34" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.75"/>
+                <path d="M36 52 L52 38" stroke="#ffb8ec" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+                <circle cx="36" cy="44" r="2.2" fill="#fff" opacity="0.95"/>
+              </svg>
+            </div>
+            <div class="live-side">
+              <div class="eq" aria-hidden="true" id="eq">
+                <span style="--eq-h:55%;--eq-dur:0.72s"></span>
+                <span style="--eq-h:90%;--eq-dur:0.55s"></span>
+                <span style="--eq-h:40%;--eq-dur:0.85s"></span>
+                <span style="--eq-h:75%;--eq-dur:0.62s"></span>
+                <span style="--eq-h:100%;--eq-dur:0.48s"></span>
+                <span style="--eq-h:60%;--eq-dur:0.78s"></span>
+                <span style="--eq-h:35%;--eq-dur:0.9s"></span>
+                <span style="--eq-h:80%;--eq-dur:0.58s"></span>
+                <span style="--eq-h:50%;--eq-dur:0.7s"></span>
+                <span style="--eq-h:95%;--eq-dur:0.52s"></span>
+              </div>
+              <p class="hint">Voice vibes on · hop in for a short chat</p>
+            </div>
+          </div>
+          <div class="chat-ticker" aria-hidden="true">
+            <div class="chat-track" id="chat-track">
+              <span><span class="who">viewer</span>yo Lapwing!</span>
+              <span><span class="who">neonfox</span>this AI stream hits different</span>
+              <span><span class="who">moth</span>聊聊就走~</span>
+              <span><span class="who">pixel</span>wait can you interrupt??</span>
+              <span><span class="who">rain</span>short chat energy ✨</span>
+              <span><span class="who">kite</span>JOIN when you’re ready</span>
+              <!-- duplicate for seamless loop -->
+              <span><span class="who">viewer</span>yo Lapwing!</span>
+              <span><span class="who">neonfox</span>this AI stream hits different</span>
+              <span><span class="who">moth</span>聊聊就走~</span>
+              <span><span class="who">pixel</span>wait can you interrupt??</span>
+              <span><span class="who">rain</span>short chat energy ✨</span>
+              <span><span class="who">kite</span>JOIN when you’re ready</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <span class="ai-badge">Clearly AI · 虚拟 AI 主播</span>
+
+      <h1>Meet Lapwing — an AI virtual streamer</h1>
+      <p class="tagline">
+        Hop into a short browser voice chat. Talk while you listen. Interrupt anytime.
+        Fresh every time.
+      </p>
+      <p class="bilingual">聊聊就走 · ~3 分钟语音畅聊</p>
+
+      <div class="hero-ctas">
+        <a class="btn btn-primary btn-lg" href="https://lapwing-live.talking-with-lapwing.workers.dev">
+          JOIN voice chat
+        </a>
+        <a class="btn btn-ghost" href="https://www.twitch.tv/reqfonjinoqnfjip" rel="noopener noreferrer" target="_blank">
+          Watch on Twitch
+        </a>
+      </div>
+    </header>
+
+    <section class="wrap" id="about" aria-labelledby="about-title">
+      <h2 class="section-title" id="about-title">What is Lapwing?</h2>
+      <p class="section-sub">An AI VTuber you can talk with live — not a real person.</p>
+      <div class="about-grid">
+        <article class="card about-card">
+          <h3>AI virtual streamer</h3>
+          <p>
+            Lapwing is an AI character on stream. Friendly, playful, and clearly artificial —
+            built for short, fun voice moments, not for pretending to be human.
+          </p>
+        </article>
+        <article class="card about-card">
+          <h3>Every chat starts fresh</h3>
+          <p>
+            No long-term memory across sessions. When you JOIN, you get a clean slate —
+            say hi, chat a bit, then hop off. Simple and cozy.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap" id="how" aria-labelledby="how-title">
+      <h2 class="section-title" id="how-title">How voice chat works</h2>
+      <p class="section-sub">Three beats. That’s it.</p>
+      <div class="steps">
+        <article class="card step">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>~3 minutes in browser</h3>
+          <p>Open the JOIN link. No app install. A short voice session right in your browser.</p>
+        </article>
+        <article class="card step">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Talk while listening</h3>
+          <p>Chat naturally — speak while Lapwing is talking. The conversation stays lively.</p>
+        </article>
+        <article class="card step">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Interrupt anytime</h3>
+          <p>Jump in mid-sentence if you want. You’re in control of the flow.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap" id="community" aria-labelledby="community-title">
+      <div class="card note-card">
+        <h2 class="section-title" id="community-title" style="text-align:left;">A cozy public space</h2>
+        <ul>
+          <li><strong>Be kind.</strong> This is a shared stream space with other viewers.</li>
+          <li>Lapwing is AI entertainment — not a real person, and not a substitute for human connection.</li>
+          <li>Every session starts fresh. Don’t expect Lapwing to remember past chats.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="wrap" id="socials" aria-labelledby="socials-title">
+      <h2 class="section-title" id="socials-title">Find Lapwing</h2>
+      <p class="section-sub">Stream, community, and updates.</p>
+      <div class="social-grid">
+        <a class="social-link" href="https://www.twitch.tv/reqfonjinoqnfjip" rel="noopener noreferrer" target="_blank">
+          <svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M4.3 2L2 5.2v15.4h5.2V22l2.3-1.4h3.5L20.8 13V2H4.3zm14.7 10.2l-3.5 3.5h-3.5l-2.3 1.4v-1.4H6.1V3.8h12.9v8.4zM15.2 7h1.7v5.2h-1.7V7zm-4.6 0H12v5.2h-1.4V7z"/></svg>
+          Twitch
+        </a>
+        <a class="social-link" href="https://discord.gg/eNGz6bjaU" rel="noopener noreferrer" target="_blank">
+          <svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.02.02.05.03.08.02c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z"/></svg>
+          Discord
+        </a>
+        <a class="social-link" href="https://x.com/Z45857Zhu" rel="noopener noreferrer" target="_blank">
+          <svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26l8.502 11.24H16.17l-4.714-6.231l-5.401 6.231H2.744l7.727-8.835L2.25 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+          X · @Z45857Zhu
+        </a>
+        <a class="social-link" href="https://bsky.app/profile/lapwing-manager.bsky.social" rel="noopener noreferrer" target="_blank">
+          <svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 11.4c-1.4-2.7-5.2-7.7-8.7-10.1C1.6.2.4 1.4.8 3.8c.5 3.1 2.3 10.4 4 12.2 1.3 1.4 3.1 1.1 4.4.2C10.5 15.3 11.2 14.5 12 13.5c.8 1 1.5 1.8 2.8 2.7 1.3.9 3.1 1.2 4.4-.2 1.7-1.8 3.5-9.1 4-12.2.4-2.4-.8-3.6-2.5-2.5-3.5 2.4-7.3 7.4-8.7 10.1z"/></svg>
+          Bluesky
+        </a>
+      </div>
+    </section>
+
+    <div class="wrap">
+      <div class="cta-band">
+        <h2>Ready to say hi?</h2>
+        <p>短聊一下 · Join a fresh ~3-minute voice chat with Lapwing.</p>
+        <a class="btn btn-primary btn-lg" href="https://lapwing-live.talking-with-lapwing.workers.dev">JOIN now</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-links">
+        <a href="https://lapwing-live.talking-with-lapwing.workers.dev">JOIN</a>
+        <a href="https://www.twitch.tv/reqfonjinoqnfjip" rel="noopener noreferrer" target="_blank">Twitch</a>
+        <a href="https://discord.gg/eNGz6bjaU" rel="noopener noreferrer" target="_blank">Discord</a>
+        <a href="https://x.com/Z45857Zhu" rel="noopener noreferrer" target="_blank">X</a>
+        <a href="https://bsky.app/profile/lapwing-manager.bsky.social" rel="noopener noreferrer" target="_blank">Bluesky</a>
+      </div>
+      <p>Lapwing is an AI virtual streamer. Not a real person.</p>
+      <p style="margin-top:0.35rem;">© <span id="y"></span> Lapwing · Made for cozy live chats</p>
+      <p class="foot-quiet">Mic access: 18+ · voices may go on stream</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+
+    (function () {
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) return;
+      var root = document.getElementById("particles");
+      if (!root) return;
+      var n = 14;
+      for (var i = 0; i < n; i++) {
+        var s = document.createElement("span");
+        s.style.left = (8 + Math.random() * 84) + "%";
+        s.style.top = (10 + Math.random() * 75) + "%";
+        s.style.setProperty("--dur", (9 + Math.random() * 10) + "s");
+        s.style.setProperty("--delay", (-Math.random() * 8) + "s");
+        s.style.width = s.style.height = (2 + Math.random() * 2.5) + "px";
+        root.appendChild(s);
+      }
+    })();
+  </script>
+</body>
+</html>
